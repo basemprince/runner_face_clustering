@@ -1,49 +1,55 @@
-import os
-import cv2
-import glob
 import argparse
-import matplotlib.pyplot as plt
+import glob
 
-from detect_bibs import detect_bibs_and_numbers
+import cv2
+
+from cluster_faces import cluster_faces, save_faces_grouped_by_id
+from detect_bibs import detect_numeric_bibs
 from extract_faces import extract_faces_and_embeddings
-from cluster_faces import cluster_faces, save_faces
+
 
 def main(debug=False):
-    image_paths = glob.glob('images/*.jpg') + glob.glob('images/*.png')
-    all_faces = []
+    image_paths = glob.glob("images/*.jpg") + glob.glob("images/*.png")
+    face_entries = []
 
-    for path in image_paths:
-        print(f"Processing {path}")
-        img = cv2.imread(path)
-
-        if debug:
-            plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-            plt.title("Original Image")
-            plt.show()
-
-        bibs = detect_bibs_and_numbers(img, debug=debug)
-        if debug:
-            for bib_text, (x1, y1, x2, y2) in bibs:
-                print(f"Bib detected: {bib_text}")
-                cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
-            plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-            plt.title("Bib Detection")
-            plt.show()
-
+    print("Step 1: Detecting faces and extracting embeddings...")
+    for img_path in image_paths:
+        img = cv2.imread(img_path)
         faces = extract_faces_and_embeddings(img, debug=debug)
-        all_faces.extend(faces)
+        for f in faces:
+            f["img_path"] = img_path
+        face_entries.extend(faces)
 
-    if not all_faces:
-        print("No faces found.")
+    if not face_entries:
+        print("No faces found in any image.")
         return
 
-    labels = cluster_faces(all_faces)
-    save_faces(all_faces, labels)
+    print("Step 2: Clustering faces...")
+    labels = cluster_faces(face_entries)
 
-    print("Finished. Results saved in /output.")
+    print("Step 3: Detecting bib numbers per person...")
+    bib_map = {}  # cluster_id → bib number
+    for cluster_id in set(labels):
+        bib_found = None
+        # Go through all images of this person
+        for i, (entry, label) in enumerate(zip(face_entries, labels)):
+            if label != cluster_id:
+                continue
+            img = cv2.imread(entry["img_path"])
+            bibs = detect_numeric_bibs(img, debug=debug)
+            if bibs:
+                bib_found = bibs[0]
+                break
+        bib_map[cluster_id] = bib_found
 
-if __name__ == '__main__':
+    print("Step 4: Saving output...")
+    save_faces_grouped_by_id(face_entries, labels, bib_map, debug=debug)
+
+    print("✅ Done. Check the `output/` folder.")
+
+
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--debug', action='store_true', help='Enable debug visualizations.')
+    parser.add_argument("--debug", action="store_true", help="Show debug info and plots.")
     args = parser.parse_args()
     main(debug=args.debug)
