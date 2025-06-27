@@ -1,0 +1,17 @@
+name: face-cluster-env
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.12
+  - ipykernel
+  - pip
+  - pip:
+    - ultralytics
+    - easyocr
+    - opencv-python-headless
+    - matplotlib
+    - scikit-learn
+    - insightface
+    - onnxruntime
+
