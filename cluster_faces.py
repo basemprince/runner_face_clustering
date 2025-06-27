@@ -26,15 +26,11 @@ def save_faces_grouped_by_id(face_entries, labels, bib_map, output_dir="output",
         person_dir = os.path.join(output_dir, folder_name)
         os.makedirs(person_dir, exist_ok=True)
 
-        saved_images = set()
         for i, face_data in enumerate(faces):
             img_path = face_data["img_path"]
             filename = os.path.basename(img_path)
-            save_path = os.path.join(person_dir, filename)
-
-            if filename not in saved_images:
-                shutil.copy(img_path, save_path)
-                saved_images.add(filename)
+            save_path = os.path.join(person_dir, f"image_{i}_{filename}")
+            shutil.copy(img_path, save_path)
 
             if debug:
                 face_img = face_data["face_img"]
