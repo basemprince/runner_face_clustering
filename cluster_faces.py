@@ -33,5 +33,8 @@ def save_faces_grouped_by_id(face_entries, labels, bib_map, output_dir="output",
             shutil.copy(img_path, save_path)
 
             if debug:
-                face_img = face_data["face_img"]
+                face_img = face_data.get("face_img")
+                if face_img is None or face_img.size == 0:
+                    print(f"⚠️ Warning: Skipping empty face image in cluster {cluster_id}")
+                    continue
                 cv2.imwrite(os.path.join(person_dir, f"face_{i}.jpg"), face_img)

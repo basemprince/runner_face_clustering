@@ -194,5 +194,6 @@ cython_debug/
 .cursorindexingignore
 
 /images
+/all_images
 /output
 *.pt
