@@ -196,4 +196,5 @@ cython_debug/
 /images
 /all_images
 /output
+/output_best
 *.pt
