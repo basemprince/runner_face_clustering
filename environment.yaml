@@ -9,7 +9,8 @@ dependencies:
   - pip:
     - ultralytics
     - easyocr
-    - opencv-python-headless
+    # Provides the cv2 module used by the scripts
+    - opencv-python
     - matplotlib
     - scikit-learn
     - insightface
