@@ -9,7 +9,7 @@ dependencies:
   - pip:
     - ultralytics
     - easyocr
-    - opencv-python-headless
+    - opencv-python
     - matplotlib
     - scikit-learn
     - insightface
@@ -20,3 +20,5 @@ dependencies:
     - gdown
     - tensorboard
     - hdbscan
+    - streamlit
+    - watchdog
