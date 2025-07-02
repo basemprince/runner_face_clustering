@@ -15,14 +15,14 @@ os.makedirs("output", exist_ok=True)
 DEBUG = True
 
 
-def main(debug=True):
+def process_images(image_paths, debug=True):
     samples = []
 
-    for img_path in glob.glob("images/*.*"):
+    for img_path in image_paths:
         image = cv2.imread(img_path)
         persons = detect_persons(image)
 
-        for i, box in enumerate(persons):
+        for box in persons:
             body_crop, _ = crop_person(image, box)
             faces = extract_face_embeddings(body_crop)
 
@@ -72,11 +72,26 @@ def main(debug=True):
                 debug_img = sample["body_crop"].copy()
                 x1, y1, x2, y2 = sample["face_box"]
                 cv2.rectangle(debug_img, (x1, y1), (x2, y2), (255, 0, 0), 2)
-                cv2.putText(debug_img, f"ID:{cluster_id}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+                cv2.putText(
+                    debug_img,
+                    f"ID:{cluster_id}",
+                    (x1, y1 - 10),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.6,
+                    (0, 255, 0),
+                    2,
+                )
                 cv2.imwrite(os.path.join(out_dir, f"debug_{idx}_{filename}"), debug_img)
 
     with open("output/runner_summary.json", "w") as f:
         json.dump(runner_summary, f, indent=2)
+
+    return runner_summary
+
+
+def main(debug=True):
+    image_paths = glob.glob("images/*.*")
+    process_images(image_paths, debug=debug)
 
 
 if __name__ == "__main__":
