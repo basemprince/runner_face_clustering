@@ -1,6 +1,7 @@
 import glob
 import json
 import os
+import shutil
 
 import cv2
 
@@ -53,6 +54,7 @@ def process_images(image_paths, debug=True):
         print(f"Processing cluster {cluster_id} with {len(group)} samples")
         for sample in group:
             bib, _ = detect_bib_in_crop(sample["body_crop"], debug=debug)
+            sample["ocr_text"] = bib
             if bib:
                 bib_votes[bib] = bib_votes.get(bib, 0) + 1
 
@@ -67,6 +69,9 @@ def process_images(image_paths, debug=True):
             filename = os.path.basename(sample["img_path"])
             out_path = os.path.join(out_dir, f"{idx}_{filename}")
             cv2.imwrite(out_path, sample["body_crop"])
+            shutil.copy(
+                sample["img_path"], os.path.join(out_dir, f"orig_{idx}_{filename}")
+            )
 
             if debug:
                 debug_img = sample["body_crop"].copy()
@@ -81,6 +86,16 @@ def process_images(image_paths, debug=True):
                     (0, 255, 0),
                     2,
                 )
+                if sample.get("ocr_text"):
+                    cv2.putText(
+                        debug_img,
+                        f"BIB:{sample['ocr_text']}",
+                        (x1, y2 + 20),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.6,
+                        (0, 255, 255),
+                        2,
+                    )
                 cv2.imwrite(os.path.join(out_dir, f"debug_{idx}_{filename}"), debug_img)
 
     with open("output/runner_summary.json", "w") as f:

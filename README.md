@@ -19,3 +19,6 @@ streamlit run app.py
 
 Upload your runner images and press **Process** to generate results in the `output/` directory.
 If you encounter a `ModuleNotFoundError` for `cv2`, make sure the environment was created from `environment.yaml` which installs OpenCV.
+
+Each cluster folder contains the original image, the cropped body image, and a
+`debug_` version with the face box and OCR result overlaid.
