@@ -11,7 +11,9 @@ from detect_bibs import detect_bib_in_crop
 from detect_runners import detect_persons
 from face_embeddings import extract_face_embeddings
 
-os.makedirs("output", exist_ok=True)
+if os.path.exists("output"):
+    shutil.rmtree("output")
+os.makedirs("output")
 
 DEBUG = True
 
@@ -53,8 +55,8 @@ def process_images(image_paths, debug=True):
         bib_votes = {}
         print(f"Processing cluster {cluster_id} with {len(group)} samples")
         for sample in group:
-            bib, _ = detect_bib_in_crop(sample["body_crop"], debug=debug)
-            sample["ocr_text"] = bib
+            bib, non_bib = detect_bib_in_crop(sample["body_crop"], debug=debug)
+            sample["ocr_text"] = (bib or "") + (non_bib or "")
             if bib:
                 bib_votes[bib] = bib_votes.get(bib, 0) + 1
 
@@ -67,8 +69,6 @@ def process_images(image_paths, debug=True):
 
         for idx, sample in enumerate(group):
             filename = os.path.basename(sample["img_path"])
-            out_path = os.path.join(out_dir, f"{idx}_{filename}")
-            cv2.imwrite(out_path, sample["body_crop"])
             shutil.copy(
                 sample["img_path"], os.path.join(out_dir, f"orig_{idx}_{filename}")
             )

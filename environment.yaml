@@ -9,7 +9,6 @@ dependencies:
   - pip:
     - ultralytics
     - easyocr
-    # Provides the cv2 module used by the scripts
     - opencv-python
     - matplotlib
     - scikit-learn
@@ -22,3 +21,4 @@ dependencies:
     - tensorboard
     - hdbscan
     - streamlit
+    - watchdog

@@ -25,7 +25,7 @@ if st.button("Process") and uploaded_files:
             f.write(uploaded.getbuffer())
         img_paths.append(str(img_path))
 
-    summary = main.process_images(img_paths, debug=False)
+    summary = main.process_images(img_paths, debug=True)
 
     st.subheader("Runner Summary")
     st.json(summary)
