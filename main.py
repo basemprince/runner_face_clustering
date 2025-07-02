@@ -50,6 +50,7 @@ def main(debug=True):
 
     for cluster_id, group in summary.items():
         bib_votes = {}
+        print(f"Processing cluster {cluster_id} with {len(group)} samples")
         for sample in group:
             bib, _ = detect_bib_in_crop(sample["body_crop"], debug=debug)
             if bib:

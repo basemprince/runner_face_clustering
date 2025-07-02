@@ -198,3 +198,4 @@ cython_debug/
 /output
 /output_best
 *.pt
+*.DS_Store
