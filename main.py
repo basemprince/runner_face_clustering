@@ -96,7 +96,9 @@ def process_images(image_paths, debug=True):
                         (0, 255, 255),
                         2,
                     )
-                cv2.imwrite(os.path.join(out_dir, f"debug_{idx}_{filename}"), debug_img)
+                name, ext = os.path.splitext(filename)
+                debug_path = os.path.join(out_dir, f"debug_{idx}_{name}{ext}")
+                cv2.imwrite(debug_path, debug_img)
 
     with open("output/runner_summary.json", "w") as f:
         json.dump(runner_summary, f, indent=2)
