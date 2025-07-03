@@ -1,5 +1,8 @@
-import numpy as np
+import warnings
+
 import hdbscan
+import numpy as np
+from sklearn.neighbors import BallTree
 
 
 def cluster_face_embeddings(
@@ -20,6 +23,12 @@ def cluster_face_embeddings(
 
     # Normalize for metrics like cosine/euclidean
     X = X / np.linalg.norm(X, axis=1, keepdims=True)
+
+    if metric == "cosine" and "cosine" not in BallTree.valid_metrics:
+        warnings.warn(
+            "Cosine metric unsupported by this scikit-learn; falling back to euclidean."
+        )
+        metric = "euclidean"
 
     cluster_kwargs = dict(
         metric=metric,
