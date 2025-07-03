@@ -18,10 +18,11 @@ os.makedirs("output")
 DEBUG = True
 
 
-def process_images(image_paths, debug=True):
+def process_images(image_paths, debug=True, progress_callback=None):
     samples = []
+    total_images = len(image_paths)
 
-    for img_path in image_paths:
+    for idx, img_path in enumerate(image_paths, start=1):
         image = cv2.imread(img_path)
         persons = detect_persons(image)
 
@@ -43,6 +44,9 @@ def process_images(image_paths, debug=True):
                 }
             )
 
+        if progress_callback:
+            progress_callback(idx / max(total_images, 1) * 0.5)
+
     labels = cluster_face_embeddings([s["embedding"] for s in samples])
 
     summary = {}
@@ -51,6 +55,8 @@ def process_images(image_paths, debug=True):
 
     runner_summary = {}
 
+    total_clusters = len(summary)
+    processed_clusters = 0
     for cluster_id, group in summary.items():
         bib_votes = {}
         print(f"Processing cluster {cluster_id} with {len(group)} samples")
@@ -100,8 +106,15 @@ def process_images(image_paths, debug=True):
                 debug_path = os.path.join(out_dir, f"debug_{idx}_{name}{ext}")
                 cv2.imwrite(debug_path, debug_img)
 
+        processed_clusters += 1
+        if progress_callback:
+            progress_callback(0.5 + processed_clusters / max(total_clusters, 1) * 0.5)
+
     with open("output/runner_summary.json", "w") as f:
         json.dump(runner_summary, f, indent=2)
+
+    if progress_callback:
+        progress_callback(1.0)
 
     return runner_summary
 

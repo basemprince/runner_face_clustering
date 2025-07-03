@@ -27,3 +27,4 @@ The UI includes a **Debug mode** checkbox to control whether debug images are
 generated. Cluster results are displayed inside collapsed sections so you can
 expand only the clusters you care about. After processing you can download all
 output files as a single ZIP archive using the **Download Results** button.
+While the images are analyzed, a progress bar shows completion status.
