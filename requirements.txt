@@ -1,0 +1,16 @@
+# requirements.txt
+ultralytics
+easyocr
+opencv-python
+matplotlib
+scikit-learn
+insightface
+onnxruntime
+pre-commit
+torch
+torchvision
+gdown
+tensorboard
+hdbscan
+streamlit
+watchdog
