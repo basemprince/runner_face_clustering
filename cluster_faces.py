@@ -1,6 +1,7 @@
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.metrics.pairwise import cosine_distances
 import numpy as np
+import inspect
 
 
 def cluster_face_embeddings(embeddings, threshold: float = 0.3):
@@ -19,12 +20,20 @@ def cluster_face_embeddings(embeddings, threshold: float = 0.3):
     # perform better for normalized face embeddings than Euclidean distance.
     distance_matrix = cosine_distances(X)
 
-    model = AgglomerativeClustering(
-        affinity="precomputed",
-        linkage="average",
-        distance_threshold=threshold,
-        n_clusters=None,
-    )
+    clustering_kwargs = {
+        "linkage": "average",
+        "distance_threshold": threshold,
+        "n_clusters": None,
+    }
+    # scikit-learn 1.2 renamed the ``affinity`` parameter to ``metric`` and
+    # removed it entirely in later versions. Detect which keyword is supported
+    # at runtime for better compatibility across versions.
+    if "metric" in inspect.signature(AgglomerativeClustering).parameters:
+        clustering_kwargs["metric"] = "precomputed"
+    else:
+        clustering_kwargs["affinity"] = "precomputed"
+
+    model = AgglomerativeClustering(**clustering_kwargs)
 
     labels = model.fit_predict(distance_matrix)
     return labels
