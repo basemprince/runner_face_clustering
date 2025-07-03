@@ -95,7 +95,7 @@ def process_images(image_paths, debug=True, progress_callback=None):
         best_bib = max(bib_votes, key=bib_votes.get) if bib_votes else None
         runner_summary[str(cluster_id)] = {"bib": best_bib, "candidates": bib_votes}
 
-        folder_name = f"bib#{best_bib}" if best_bib else f"person#{cluster_id}"
+        folder_name = f"person#{cluster_id}-bib#{best_bib}" if best_bib else f"person#{cluster_id}"
         out_dir = os.path.join("output", folder_name)
         os.makedirs(out_dir, exist_ok=True)
 
