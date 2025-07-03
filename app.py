@@ -46,9 +46,9 @@ if st.button("Process") and uploaded_files:
     )
 
     for cluster_id, info in summary.items():
-        TEXT = f"bib#{info['bib']}" if info["bib"] else f"person#{cluster_id}"
+        TEXT = f"person#{cluster_id}-bib#{info['bib']}" if info["bib"] else f"person#{cluster_id}"
         folder = Path("output") / (TEXT)
-        with st.expander(f"Cluster {cluster_id} - {TEXT}", expanded=False):
+        with st.expander(f"{TEXT}", expanded=False):
             for image_file in folder.glob("*.jpg"):
                 st.image(str(image_file))
 
