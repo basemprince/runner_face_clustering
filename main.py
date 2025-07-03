@@ -2,7 +2,7 @@ import glob
 import json
 import os
 import shutil
-
+import numpy as np
 import cv2
 
 from cluster_faces import cluster_face_embeddings
@@ -17,6 +17,29 @@ os.makedirs("output")
 
 DEBUG = True
 
+def apply_clahe(image):
+    lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
+    l, a, b = cv2.split(lab)
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    cl = clahe.apply(l)
+    merged = cv2.merge((cl, a, b))
+    return cv2.cvtColor(merged, cv2.COLOR_LAB2BGR)
+
+def sharpen(image):
+    kernel = np.array([[-1,-1,-1], [-1,9,-1], [-1,-1,-1]])
+    return cv2.filter2D(image, -1, kernel)
+
+def preprocess_image(image):
+    image = apply_clahe(image)
+    image = sharpen(image)
+    return image
+
+def preprocess_for_ocr(image):
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    binarized = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                                  cv2.THRESH_BINARY, 11, 2)
+
+    return binarized
 
 def process_images(image_paths, debug=True, progress_callback=None):
     samples = []
@@ -24,6 +47,7 @@ def process_images(image_paths, debug=True, progress_callback=None):
 
     for idx, img_path in enumerate(image_paths, start=1):
         image = cv2.imread(img_path)
+        # image = preprocess_image(image)
         persons = detect_persons(image)
 
         for box in persons:
@@ -61,7 +85,9 @@ def process_images(image_paths, debug=True, progress_callback=None):
         bib_votes = {}
         print(f"Processing cluster {cluster_id} with {len(group)} samples")
         for sample in group:
-            bib, non_bib = detect_bib_in_crop(sample["body_crop"], debug=debug)
+            # ocr_input = preprocess_for_ocr(sample["body_crop"])
+            ocr_input = sample["body_crop"]
+            bib, non_bib = detect_bib_in_crop(ocr_input, debug=debug)
             sample["ocr_text"] = (bib or "") + (non_bib or "")
             if bib:
                 bib_votes[bib] = bib_votes.get(bib, 0) + 1
