@@ -1,25 +1,30 @@
-import hdbscan
+from sklearn.cluster import AgglomerativeClustering
+from sklearn.metrics.pairwise import cosine_distances
 import numpy as np
 
 
-def cluster_face_embeddings(embeddings):
+def cluster_face_embeddings(embeddings, threshold: float = 0.3):
+    """Cluster face embeddings using agglomerative clustering.
+
+    A cosine distance matrix is computed and then ``AgglomerativeClustering``
+    is run with ``distance_threshold`` so clusters are formed solely based on
+    similarity.  The default threshold of ``0.3`` works reasonably well for
+    embeddings produced by ``insightface`` but can be tuned by callers.
+    """
+
     X = np.vstack(embeddings)
-    cov = np.cov(X, rowvar=False)
-    model = hdbscan.HDBSCAN(
-        metric='mahalanobis',
-        V=cov,
-        min_cluster_size=2,
-        cluster_selection_epsilon=0.0,
-        min_samples=5,
+
+    # Compute pairwise cosine distances and let the sklearn implementation
+    # operate on the pre-computed matrix. Using cosine distance tends to
+    # perform better for normalized face embeddings than Euclidean distance.
+    distance_matrix = cosine_distances(X)
+
+    model = AgglomerativeClustering(
+        affinity="precomputed",
+        linkage="average",
+        distance_threshold=threshold,
+        n_clusters=None,
     )
 
-    labels = model.fit_predict(X)
-
-    # Treat each HDBSCAN outlier (-1) as its own cluster label
-    next_label = labels.max() + 1 if labels.size else 0
-    for idx, lbl in enumerate(labels):
-        if lbl == -1:
-            labels[idx] = next_label
-            next_label += 1
-
+    labels = model.fit_predict(distance_matrix)
     return labels
