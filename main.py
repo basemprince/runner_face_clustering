@@ -1,9 +1,16 @@
+"""
+this script processes images to detect runners, extract their faces, and cluster them based on face embeddings.
+"""
+
+# pylint: disable=too-many-locals, too-many-branches, cell-var-from-loop
+
 import glob
 import json
 import os
 import shutil
-import numpy as np
+
 import cv2
+import numpy as np
 
 from cluster_faces import cluster_face_embeddings
 from crop_bodies import crop_person
@@ -17,7 +24,9 @@ os.makedirs("output")
 
 DEBUG = True
 
+
 def apply_clahe(image):
+    """Apply CLAHE to enhance contrast in the image."""
     lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
     l, a, b = cv2.split(lab)
     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
@@ -25,23 +34,30 @@ def apply_clahe(image):
     merged = cv2.merge((cl, a, b))
     return cv2.cvtColor(merged, cv2.COLOR_LAB2BGR)
 
+
 def sharpen(image):
-    kernel = np.array([[-1,-1,-1], [-1,9,-1], [-1,-1,-1]])
+    """Apply sharpening filter to the image."""
+    kernel = np.array([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]])
     return cv2.filter2D(image, -1, kernel)
 
+
 def preprocess_image(image):
+    """Preprocess the image for better OCR and face detection."""
     image = apply_clahe(image)
     image = sharpen(image)
     return image
 
+
 def preprocess_for_ocr(image):
+    """Preprocess the image for OCR by converting to grayscale and applying adaptive thresholding."""
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    binarized = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-                                  cv2.THRESH_BINARY, 11, 2)
+    binarized = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
 
     return binarized
 
+
 def process_images(image_paths, debug=True, progress_callback=None):
+    """Process a list of image paths to detect runners, extract faces, and cluster them."""
     samples = []
     total_images = len(image_paths)
 
@@ -73,7 +89,8 @@ def process_images(image_paths, debug=True, progress_callback=None):
 
     labels = cluster_face_embeddings([s["embedding"] for s in samples])
 
-    summary = {}
+    summary: dict[int, list[dict]] = {}
+
     for lbl, s in zip(labels, samples):
         summary.setdefault(lbl, []).append(s)
 
@@ -82,7 +99,8 @@ def process_images(image_paths, debug=True, progress_callback=None):
     total_clusters = len(summary)
     processed_clusters = 0
     for cluster_id, group in summary.items():
-        bib_votes = {}
+        bib_votes: dict[str, int] = {}
+
         print(f"Processing cluster {cluster_id} with {len(group)} samples")
         for sample in group:
             # ocr_input = preprocess_for_ocr(sample["body_crop"])
@@ -92,7 +110,7 @@ def process_images(image_paths, debug=True, progress_callback=None):
             if bib:
                 bib_votes[bib] = bib_votes.get(bib, 0) + 1
 
-        best_bib = max(bib_votes, key=bib_votes.get) if bib_votes else None
+        best_bib = max(bib_votes, key=lambda k: bib_votes[k]) if bib_votes else None
         runner_summary[str(cluster_id)] = {"bib": best_bib, "candidates": bib_votes}
 
         folder_name = f"person#{cluster_id}-bib#{best_bib}" if best_bib else f"person#{cluster_id}"
@@ -101,9 +119,7 @@ def process_images(image_paths, debug=True, progress_callback=None):
 
         for idx, sample in enumerate(group):
             filename = os.path.basename(sample["img_path"])
-            shutil.copy(
-                sample["img_path"], os.path.join(out_dir, f"orig_{idx}_{filename}")
-            )
+            shutil.copy(sample["img_path"], os.path.join(out_dir, f"orig_{idx}_{filename}"))
 
             if debug:
                 debug_img = sample["body_crop"].copy()
@@ -136,7 +152,7 @@ def process_images(image_paths, debug=True, progress_callback=None):
         if progress_callback:
             progress_callback(0.5 + processed_clusters / max(total_clusters, 1) * 0.5)
 
-    with open("output/runner_summary.json", "w") as f:
+    with open("output/runner_summary.json", "w", encoding="utf-8") as f:
         json.dump(runner_summary, f, indent=2)
 
     if progress_callback:
@@ -146,6 +162,7 @@ def process_images(image_paths, debug=True, progress_callback=None):
 
 
 def main(debug=True):
+    """Main function to process images."""
     image_paths = glob.glob("images/*.*")
     process_images(image_paths, debug=debug)
 

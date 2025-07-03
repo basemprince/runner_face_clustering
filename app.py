@@ -1,5 +1,10 @@
-from pathlib import Path
+"""
+app for runner face clustering using Streamlit.
+"""
+
 import shutil
+from io import BufferedReader
+from pathlib import Path
 
 import streamlit as st
 
@@ -9,9 +14,7 @@ st.title("Runner Face Clustering UI")
 
 debug_mode = st.checkbox("Debug mode", value=False)
 
-uploaded_files = st.file_uploader(
-    "Upload runner images", type=["jpg", "jpeg", "png"], accept_multiple_files=True
-)
+uploaded_files = st.file_uploader("Upload runner images", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
 
 if st.button("Process") and uploaded_files:
     images_dir = Path("images")
@@ -31,25 +34,22 @@ if st.button("Process") and uploaded_files:
     progress = st.progress(0)
 
     def update_progress(value):
+        """Callback to update progress bar."""
         progress.progress(value)
 
-    summary = main.process_images(
-        img_paths, debug=debug_mode, progress_callback=update_progress
-    )
+    summary = main.process_images(img_paths, debug=debug_mode, progress_callback=update_progress)
 
     for cluster_id, info in summary.items():
-        text = f"bib#{info['bib']}" if info["bib"] else f"person#{cluster_id}"
-        folder = Path("output") / (
-            text
-        )
-        with st.expander(f"Cluster {cluster_id} - {text}", expanded=False):
+        TEXT = f"bib#{info['bib']}" if info["bib"] else f"person#{cluster_id}"
+        folder = Path("output") / (TEXT)
+        with st.expander(f"Cluster {cluster_id} - {TEXT}", expanded=False):
             for image_file in folder.glob("*.jpg"):
                 st.image(str(image_file))
 
     if Path("output").exists():
         archive_path = shutil.make_archive("output", "zip", "output")
-        with open(archive_path, "rb") as f:
-            st.download_button("Download Results", f, file_name="output.zip", mime="application/zip")
-
+        archive_file: BufferedReader = open(archive_path, "rb")  # pylint: disable=consider-using-with
+        with archive_file:
+            st.download_button("Download Results", archive_file, file_name="output.zip", mime="application/zip")
     st.subheader("Runner Summary")
     st.json(summary)

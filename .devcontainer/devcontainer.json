@@ -16,7 +16,7 @@
       ]
     }
   },
-  "updateContentCommand": "sudo apt update && sudo apt install -y libgl1 && [ -f requirements.txt ] && pip install --no-cache-dir -r requirements.txt; echo '✅ Environment ready.'",
+  "updateContentCommand": "sudo apt update && sudo apt install -y libgl1 && [ -f requirements.txt ] && pip install --no-cache-dir -r requirements.txt; echo '\u2705 Environment ready.'",
   "postAttachCommand": {
     "server": "streamlit run app.py --server.enableCORS false --server.enableXsrfProtection false"
   },

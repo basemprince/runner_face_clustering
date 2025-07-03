@@ -1,3 +1,7 @@
+"""
+this module provides functionality to extract faces and their embeddings from images using the InsightFace library.
+"""
+
 import insightface
 
 face_model = insightface.app.FaceAnalysis(name="buffalo_l")
@@ -5,6 +9,7 @@ face_model.prepare(ctx_id=0)
 
 
 def extract_faces_and_embeddings(img, debug=False):
+    """Extract faces and their embeddings from an image."""
     h, w = img.shape[:2]
     faces = face_model.get(img)
     results = []

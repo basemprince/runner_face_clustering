@@ -1,16 +1,15 @@
-# requirements.txt
-ultralytics
 easyocr
-opencv-python
-matplotlib
-scikit-learn
+gdown
+hdbscan
 insightface
+matplotlib
 onnxruntime
+opencv-python
 pre-commit
+scikit-learn
+streamlit
+tensorboard
 torch
 torchvision
-gdown
-tensorboard
-hdbscan
-streamlit
+ultralytics
 watchdog
