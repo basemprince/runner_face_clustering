@@ -37,15 +37,12 @@ if st.button("Process") and uploaded_files:
         img_paths, debug=debug_mode, progress_callback=update_progress
     )
 
-    st.subheader("Runner Summary")
-    st.json(summary)
-    st.write("Results stored in the output/ directory.")
-
     for cluster_id, info in summary.items():
+        text = f"bib#{info['bib']}" if info["bib"] else f"person#{cluster_id}"
         folder = Path("output") / (
-            f"bib#{info['bib']}" if info["bib"] else f"person#{cluster_id}"
+            text
         )
-        with st.expander(f"Cluster {cluster_id}", expanded=False):
+        with st.expander(f"Cluster {cluster_id} - {text}", expanded=False):
             for image_file in folder.glob("*.jpg"):
                 st.image(str(image_file))
 
@@ -53,3 +50,6 @@ if st.button("Process") and uploaded_files:
         archive_path = shutil.make_archive("output", "zip", "output")
         with open(archive_path, "rb") as f:
             st.download_button("Download Results", f, file_name="output.zip", mime="application/zip")
+
+    st.subheader("Runner Summary")
+    st.json(summary)

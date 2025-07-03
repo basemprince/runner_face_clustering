@@ -199,3 +199,4 @@ cython_debug/
 /output_best
 *.pt
 *.DS_Store
+*.zip
