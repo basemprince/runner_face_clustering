@@ -56,8 +56,20 @@ def preprocess_for_ocr(image):
     return binarized
 
 
-def process_images(image_paths, debug=True, progress_callback=None):
-    """Process a list of image paths to detect runners, extract faces, and cluster them."""
+def process_images(image_paths, debug=True, progress_callback=None, extract_bib=True):
+    """Process a list of image paths to detect runners, extract faces, and cluster them.
+
+    Parameters
+    ----------
+    image_paths : list[str]
+        Paths to input images.
+    debug : bool, optional
+        Whether to output debug information and images.
+    progress_callback : callable | None, optional
+        Callback to report progress as a float in ``[0, 1]``.
+    extract_bib : bool, optional
+        If ``True``, attempt OCR to extract bib numbers from detected runners.
+    """
     samples = []
     total_images = len(image_paths)
 
@@ -105,7 +117,11 @@ def process_images(image_paths, debug=True, progress_callback=None):
         for sample in group:
             # ocr_input = preprocess_for_ocr(sample["body_crop"])
             ocr_input = sample["body_crop"]
-            bib, non_bib = detect_bib_in_crop(ocr_input, debug=debug)
+            if extract_bib:
+                bib, non_bib = detect_bib_in_crop(ocr_input, debug=debug)
+            else:
+                bib, non_bib = None, None
+
             sample["ocr_text"] = (bib or "") + (non_bib or "")
             if bib:
                 bib_votes[bib] = bib_votes.get(bib, 0) + 1
@@ -161,10 +177,10 @@ def process_images(image_paths, debug=True, progress_callback=None):
     return runner_summary
 
 
-def main(debug=True):
+def main(debug=True, extract_bib=True):
     """Main function to process images."""
     image_paths = glob.glob("images/*.*")
-    process_images(image_paths, debug=debug)
+    process_images(image_paths, debug=debug, extract_bib=extract_bib)
 
 
 if __name__ == "__main__":
