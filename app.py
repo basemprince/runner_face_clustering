@@ -14,6 +14,8 @@ st.title("Runner Face Clustering UI")
 
 debug_mode = st.checkbox("Debug mode", value=False)
 extract_bib = st.checkbox("Extract bib number", value=True)
+visualize_embeddings = st.checkbox("Visualize embeddings", value=False)
+reducer_choice = st.selectbox("Dimensionality reduction", ["None", "pca", "tsne"], index=0)
 
 uploaded_files = st.file_uploader("Upload runner images", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
 
@@ -43,6 +45,8 @@ if st.button("Process") and uploaded_files:
         debug=debug_mode,
         progress_callback=update_progress,
         extract_bib=extract_bib,
+        visualize=visualize_embeddings,
+        reduce_method=None if reducer_choice == "None" else reducer_choice,
     )
 
     for cluster_id, info in summary.items():

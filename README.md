@@ -24,7 +24,9 @@ Each cluster folder contains the original image, the cropped body image, and a
 `debug_` version with the face box and OCR result overlaid.
 
 The UI includes **Debug mode** and **Extract bib number** checkboxes to control
-whether debug images are generated and whether OCR is run on bib numbers.
+whether debug images are generated and whether OCR is run on bib numbers. You
+can also enable **Visualize embeddings** to save a 2‑D scatter plot and choose a
+dimensionality reducer (`None`, `pca`, or `tsne`).
 Cluster results are displayed inside collapsed sections so you can
 expand only the clusters you care about. After processing you can download all
 output files as a single ZIP archive using the **Download Results** button.
