@@ -94,6 +94,11 @@ def process_images(
         Minimum width/height in pixels for detected bodies. Smaller detections are skipped.
     min_face_size : int, optional
         Minimum width/height in pixels for detected faces. Smaller faces are skipped.
+
+    Returns
+    -------
+    dict
+        Summary grouped by cluster label. If no faces are detected, the summary is empty.
     """
     samples = []
     total_images = len(image_paths)
@@ -132,11 +137,14 @@ def process_images(
         if progress_callback:
             progress_callback(idx / max(total_images, 1) * 0.5)
 
-    labels = cluster_face_embeddings(
-        [s["embedding"] for s in samples],
-        reduce_method=reduce_method,
-        n_components=n_components,
-    )
+    if samples:
+        labels = cluster_face_embeddings(
+            [s["embedding"] for s in samples],
+            reduce_method=reduce_method,
+            n_components=n_components,
+        )
+    else:
+        labels = []
 
     if visualize:
         reduced = reduce_embeddings(
