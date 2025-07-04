@@ -4,14 +4,25 @@ This module contains the function to cluster face embeddings using HDBSCAN.
 
 import hdbscan
 import numpy as np
+from sklearn.decomposition import PCA
+from sklearn.manifold import TSNE
 
 
-def cluster_face_embeddings(embeddings):
-    """Cluster face embeddings using HDBSCAN with safety checks."""
+def cluster_face_embeddings(embeddings, reduce_method: str | None = None, n_components: int = 2):
+    """Cluster face embeddings using HDBSCAN with optional dimensionality reduction."""
     stacked_embed = np.vstack(embeddings)
 
     # Remove rows with NaNs
     stacked_embed = stacked_embed[~np.isnan(stacked_embed).any(axis=1)]
+
+    if reduce_method:
+        if reduce_method == "pca":
+            reducer = PCA(n_components=n_components)
+        elif reduce_method == "tsne":
+            reducer = TSNE(n_components=n_components, init="random", random_state=42)
+        else:
+            raise ValueError("reduce_method must be 'pca' or 'tsne'")
+        stacked_embed = reducer.fit_transform(stacked_embed)
 
     if stacked_embed.shape[0] < 2:
         return np.array([-1] * len(embeddings))  # Not enough valid points

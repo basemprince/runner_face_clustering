@@ -13,6 +13,7 @@ import cv2
 import numpy as np
 
 from cluster_faces import cluster_face_embeddings
+from visualize_embeddings import plot_embeddings, reduce_embeddings
 from crop_bodies import crop_person
 from detect_bibs import detect_bib_in_crop
 from detect_runners import detect_persons
@@ -56,7 +57,14 @@ def preprocess_for_ocr(image):
     return binarized
 
 
-def process_images(image_paths, debug=True, progress_callback=None, extract_bib=True):
+def process_images(
+    image_paths,
+    debug: bool = True,
+    progress_callback=None,
+    extract_bib: bool = True,
+    visualize: bool = False,
+    reduce_method: str | None = None,
+):
     """Process a list of image paths to detect runners, extract faces, and cluster them.
 
     Parameters
@@ -69,6 +77,11 @@ def process_images(image_paths, debug=True, progress_callback=None, extract_bib=
         Callback to report progress as a float in ``[0, 1]``.
     extract_bib : bool, optional
         If ``True``, attempt OCR to extract bib numbers from detected runners.
+    visualize : bool, optional
+        If ``True``, save a 2D plot of embeddings to ``output/embeddings.png``.
+    reduce_method : str | None, optional
+        Dimensionality reduction method for clustering and visualization.
+        Allowed values are ``"pca"`` and ``"tsne"``.
     """
     samples = []
     total_images = len(image_paths)
@@ -99,7 +112,11 @@ def process_images(image_paths, debug=True, progress_callback=None, extract_bib=
         if progress_callback:
             progress_callback(idx / max(total_images, 1) * 0.5)
 
-    labels = cluster_face_embeddings([s["embedding"] for s in samples])
+    labels = cluster_face_embeddings([s["embedding"] for s in samples], reduce_method=reduce_method)
+
+    if visualize:
+        reduced = reduce_embeddings([s["embedding"] for s in samples], method=reduce_method or "pca")
+        plot_embeddings(reduced, labels=labels, out_path="output/embeddings.png")
 
     summary: dict[int, list[dict]] = {}
 
@@ -177,10 +194,16 @@ def process_images(image_paths, debug=True, progress_callback=None, extract_bib=
     return runner_summary
 
 
-def main(debug=True, extract_bib=True):
+def main(debug: bool = True, extract_bib: bool = True, visualize: bool = False, reduce_method: str | None = None):
     """Main function to process images."""
     image_paths = glob.glob("images/*.*")
-    process_images(image_paths, debug=debug, extract_bib=extract_bib)
+    process_images(
+        image_paths,
+        debug=debug,
+        extract_bib=extract_bib,
+        visualize=visualize,
+        reduce_method=reduce_method,
+    )
 
 
 if __name__ == "__main__":
