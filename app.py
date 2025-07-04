@@ -60,6 +60,11 @@ if st.button("Process") and uploaded_files:
         archive_path = shutil.make_archive("output", "zip", "output")
         archive_file: BufferedReader = open(archive_path, "rb")  # pylint: disable=consider-using-with
         with archive_file:
-            st.download_button("Download Results", archive_file, file_name="output.zip", mime="application/zip")
+            st.download_button(
+                "Download Results",
+                archive_file,
+                file_name="output.zip",
+                mime="application/zip",
+            )
     st.subheader("Runner Summary")
     st.json(summary)

@@ -38,7 +38,9 @@ The processing logic can also run without the UI:
 
 ```bash
 python main.py --visualize --reduce-method tsne --n-components 2
+python main.py --visualize --reduce-method pca --n-components auto
 ```
 
-Use `--help` for the full list of options including controlling the reducer and
-enabling or disabling OCR.
+Use `--help` for the full list of options including controlling the reducer,
+enabling or disabling OCR, and using ``--n-components auto`` with PCA to choose
+the dimensionality that explains 90% of the variance.

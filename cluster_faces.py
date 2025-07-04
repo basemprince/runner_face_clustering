@@ -2,16 +2,20 @@
 This module contains the function to cluster face embeddings using HDBSCAN.
 """
 
+from typing import Sequence
+
 import hdbscan
 import numpy as np
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 
+from visualize_embeddings import _auto_pca_components
+
 
 def cluster_face_embeddings(
-    embeddings,
+    embeddings: Sequence[np.ndarray],
     reduce_method: str | None = None,
-    n_components: int = 2,
+    n_components: int | str = 2,
 ):
     """Cluster face embeddings using HDBSCAN with optional dimensionality reduction.
 
@@ -21,8 +25,9 @@ def cluster_face_embeddings(
         Input embedding vectors.
     reduce_method : {"pca", "tsne"} | None, optional
         If provided, reduce the embeddings before clustering using the specified method.
-    n_components : int, optional
-        Number of dimensions for the reducer. Defaults to ``2``.
+    n_components : int | str, optional
+        Number of dimensions for the reducer. If ``"auto"`` with PCA, the number
+        of components explaining at least 90% variance is chosen. Defaults to ``2``.
     """
     stacked_embed = np.vstack(embeddings)
 
@@ -31,9 +36,11 @@ def cluster_face_embeddings(
 
     if reduce_method:
         if reduce_method == "pca":
-            reducer = PCA(n_components=n_components)
+            if n_components == "auto":
+                n_components = _auto_pca_components(stacked_embed)
+            reducer = PCA(n_components=int(n_components))
         elif reduce_method == "tsne":
-            reducer = TSNE(n_components=n_components, init="random", random_state=42)
+            reducer = TSNE(n_components=int(n_components), init="random", random_state=42)
         else:
             raise ValueError("reduce_method must be 'pca' or 'tsne'")
         stacked_embed = reducer.fit_transform(stacked_embed)

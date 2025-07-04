@@ -66,7 +66,7 @@ def process_images(
     extract_bib: bool = True,
     visualize: bool = False,
     reduce_method: str | None = None,
-    n_components: int = 2,
+    n_components: int | str = 2,
 ):
     """Process a list of image paths to detect runners, extract faces, and cluster them.
 
@@ -85,8 +85,9 @@ def process_images(
     reduce_method : str | None, optional
         Dimensionality reduction method for clustering and visualization.
         Allowed values are ``"pca"`` and ``"tsne"``.
-    n_components : int, optional
-        Number of dimensions for the reducer. Defaults to ``2``.
+    n_components : int | str, optional
+        Number of dimensions for the reducer. If ``"auto"`` with PCA, choose the
+        number of components explaining at least 90% variance. Defaults to ``2``.
     """
     samples = []
     total_images = len(image_paths)
@@ -118,12 +119,16 @@ def process_images(
             progress_callback(idx / max(total_images, 1) * 0.5)
 
     labels = cluster_face_embeddings(
-        [s["embedding"] for s in samples], reduce_method=reduce_method, n_components=n_components
+        [s["embedding"] for s in samples],
+        reduce_method=reduce_method,
+        n_components=n_components,
     )
 
     if visualize:
         reduced = reduce_embeddings(
-            [s["embedding"] for s in samples], method=reduce_method or "pca", n_components=n_components
+            [s["embedding"] for s in samples],
+            method=reduce_method or "pca",
+            n_components=n_components,
         )
         plot_embeddings(reduced, labels=labels, out_path="output/embeddings.png")
 
@@ -208,7 +213,7 @@ def main(
     extract_bib: bool = True,
     visualize: bool = False,
     reduce_method: str | None = None,
-    n_components: int = 2,
+    n_components: int | str = 2,
 ):
     """Main function to process images.
 
@@ -249,16 +254,16 @@ if __name__ == "__main__":  # pragma: no cover - CLI entry point
     )
     parser.add_argument(
         "--n-components",
-        type=int,
-        default=2,
-        help="Number of dimensions for the reducer",
+        default="2",
+        help="Number of dimensions for the reducer or 'auto' for PCA",
     )
 
     args = parser.parse_args()
+    n_components_arg: int | str = "auto" if args.n_components == "auto" else int(args.n_components)
     main(
         debug=args.debug,
         extract_bib=args.extract_bib,
         visualize=args.visualize,
         reduce_method=args.reduce_method,
-        n_components=args.n_components,
+        n_components=n_components_arg,
     )
