@@ -67,6 +67,8 @@ def process_images(
     visualize: bool = False,
     reduce_method: str | None = None,
     n_components: int | str = 2,
+    min_body_size: int = 50,
+    min_face_size: int = 20,
 ):
     """Process a list of image paths to detect runners, extract faces, and cluster them.
 
@@ -88,6 +90,10 @@ def process_images(
     n_components : int | str, optional
         Number of dimensions for the reducer. If ``"auto"`` with PCA, choose the
         number of components explaining at least 90% variance. Defaults to ``2``.
+    min_body_size : int, optional
+        Minimum width/height in pixels for detected bodies. Smaller detections are skipped.
+    min_face_size : int, optional
+        Minimum width/height in pixels for detected faces. Smaller faces are skipped.
     """
     samples = []
     total_images = len(image_paths)
@@ -95,11 +101,19 @@ def process_images(
     for idx, img_path in enumerate(image_paths, start=1):
         image = cv2.imread(img_path)
         # image = preprocess_image(image)
-        persons = detect_persons(image)
+        persons = [
+            box
+            for box in detect_persons(image)
+            if (box[2] - box[0] >= min_body_size and box[3] - box[1] >= min_body_size)
+        ]
 
         for box in persons:
             body_crop, _ = crop_person(image, box)
-            faces = extract_face_embeddings(body_crop)
+            faces = [
+                f
+                for f in extract_face_embeddings(body_crop)
+                if (f["bbox"][2] - f["bbox"][0] >= min_face_size and f["bbox"][3] - f["bbox"][1] >= min_face_size)
+            ]
 
             if not faces:
                 continue
@@ -214,6 +228,8 @@ def main(
     visualize: bool = False,
     reduce_method: str | None = None,
     n_components: int | str = 2,
+    min_body_size: int = 50,
+    min_face_size: int = 20,
 ):
     """Main function to process images.
 
@@ -227,6 +243,8 @@ def main(
         visualize=visualize,
         reduce_method=reduce_method,
         n_components=n_components,
+        min_body_size=min_body_size,
+        min_face_size=min_face_size,
     )
 
 
@@ -257,6 +275,18 @@ if __name__ == "__main__":  # pragma: no cover - CLI entry point
         default="2",
         help="Number of dimensions for the reducer or 'auto' for PCA",
     )
+    parser.add_argument(
+        "--min-body-size",
+        type=int,
+        default=50,
+        help="Minimum width/height in pixels for detected bodies",
+    )
+    parser.add_argument(
+        "--min-face-size",
+        type=int,
+        default=20,
+        help="Minimum width/height in pixels for detected faces",
+    )
 
     args = parser.parse_args()
     n_components_arg: int | str = "auto" if args.n_components == "auto" else int(args.n_components)
@@ -266,4 +296,6 @@ if __name__ == "__main__":  # pragma: no cover - CLI entry point
         visualize=args.visualize,
         reduce_method=args.reduce_method,
         n_components=n_components_arg,
+        min_body_size=args.min_body_size,
+        min_face_size=args.min_face_size,
     )
