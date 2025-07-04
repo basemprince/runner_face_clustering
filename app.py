@@ -13,6 +13,7 @@ import main
 st.title("Runner Face Clustering UI")
 
 debug_mode = st.checkbox("Debug mode", value=False)
+extract_bib = st.checkbox("Extract bib number", value=True)
 
 uploaded_files = st.file_uploader("Upload runner images", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
 
@@ -37,12 +38,17 @@ if st.button("Process") and uploaded_files:
         """Callback to update progress bar."""
         progress.progress(value)
 
-    summary = main.process_images(img_paths, debug=debug_mode, progress_callback=update_progress)
+    summary = main.process_images(
+        img_paths,
+        debug=debug_mode,
+        progress_callback=update_progress,
+        extract_bib=extract_bib,
+    )
 
     for cluster_id, info in summary.items():
-        TEXT = f"bib#{info['bib']}" if info["bib"] else f"person#{cluster_id}"
+        TEXT = f"person#{cluster_id}-bib#{info['bib']}" if info["bib"] else f"person#{cluster_id}"
         folder = Path("output") / (TEXT)
-        with st.expander(f"Cluster {cluster_id} - {TEXT}", expanded=False):
+        with st.expander(f"{TEXT}", expanded=False):
             for image_file in folder.glob("*.jpg"):
                 st.image(str(image_file))
 
