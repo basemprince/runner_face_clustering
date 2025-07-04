@@ -29,3 +29,14 @@ Cluster results are displayed inside collapsed sections so you can
 expand only the clusters you care about. After processing you can download all
 output files as a single ZIP archive using the **Download Results** button.
 While the images are analyzed, a progress bar shows completion status.
+
+## Command line usage
+
+The processing logic can also run without the UI:
+
+```bash
+python main.py --visualize --reduce-method tsne --n-components 2
+```
+
+Use `--help` for the full list of options including controlling the reducer and
+enabling or disabling OCR.

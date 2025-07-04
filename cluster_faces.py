@@ -8,8 +8,22 @@ from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 
 
-def cluster_face_embeddings(embeddings, reduce_method: str | None = None, n_components: int = 2):
-    """Cluster face embeddings using HDBSCAN with optional dimensionality reduction."""
+def cluster_face_embeddings(
+    embeddings,
+    reduce_method: str | None = None,
+    n_components: int = 2,
+):
+    """Cluster face embeddings using HDBSCAN with optional dimensionality reduction.
+
+    Parameters
+    ----------
+    embeddings : Iterable[np.ndarray]
+        Input embedding vectors.
+    reduce_method : {"pca", "tsne"} | None, optional
+        If provided, reduce the embeddings before clustering using the specified method.
+    n_components : int, optional
+        Number of dimensions for the reducer. Defaults to ``2``.
+    """
     stacked_embed = np.vstack(embeddings)
 
     # Remove rows with NaNs

@@ -1,5 +1,7 @@
 """Utility functions to visualize face embeddings with dimensionality reduction."""
 
+# pylint: disable=import-outside-toplevel
+
 from __future__ import annotations
 
 import json
@@ -52,6 +54,7 @@ def main() -> None:  # pragma: no cover - convenience script
     parser.add_argument("embeddings", help="Path to JSON file containing a list of embeddings")
     parser.add_argument("--labels", help="Optional JSON file with cluster labels", default=None)
     parser.add_argument("--method", choices=["pca", "tsne"], default="pca")
+    parser.add_argument("--n-components", type=int, default=2, help="Output dimensionality")
     parser.add_argument("--output", help="Path to save the plot")
     args = parser.parse_args()
 
@@ -63,10 +66,9 @@ def main() -> None:  # pragma: no cover - convenience script
         with open(args.labels, "r", encoding="utf-8") as f:
             labels = json.load(f)
 
-    reduced = reduce_embeddings(data, method=args.method)
+    reduced = reduce_embeddings(data, method=args.method, n_components=args.n_components)
     plot_embeddings(reduced, labels=labels, out_path=args.output)
 
 
 if __name__ == "__main__":  # pragma: no cover - convenience script
     main()
-
