@@ -13,7 +13,9 @@ import main
 st.title("Runner Face Clustering UI")
 
 debug_mode = st.checkbox("Debug mode", value=False)
-extract_bib = st.checkbox("Extract bib number", value=True)
+extract_bib = st.checkbox("Extract bib number (very slow)", value=False)
+visualize_embeddings = st.checkbox("Visualize embeddings", value=False)
+reducer_choice = st.selectbox("Dimensionality reduction", ["None", "pca", "tsne"], index=1)
 
 uploaded_files = st.file_uploader("Upload runner images", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
 
@@ -43,6 +45,9 @@ if st.button("Process") and uploaded_files:
         debug=debug_mode,
         progress_callback=update_progress,
         extract_bib=extract_bib,
+        visualize=visualize_embeddings,
+        reduce_method=None if reducer_choice == "None" else reducer_choice,
+        n_components="auto",
     )
 
     for cluster_id, info in summary.items():
@@ -56,6 +61,11 @@ if st.button("Process") and uploaded_files:
         archive_path = shutil.make_archive("output", "zip", "output")
         archive_file: BufferedReader = open(archive_path, "rb")  # pylint: disable=consider-using-with
         with archive_file:
-            st.download_button("Download Results", archive_file, file_name="output.zip", mime="application/zip")
+            st.download_button(
+                "Download Results",
+                archive_file,
+                file_name="output.zip",
+                mime="application/zip",
+            )
     st.subheader("Runner Summary")
     st.json(summary)

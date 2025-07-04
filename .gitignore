@@ -197,6 +197,7 @@ cython_debug/
 /all_images
 /output
 /output_best
+/dataset
 *.pt
 *.DS_Store
 *.zip

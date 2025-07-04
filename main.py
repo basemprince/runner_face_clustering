@@ -2,7 +2,9 @@
 this script processes images to detect runners, extract their faces, and cluster them based on face embeddings.
 """
 
-# pylint: disable=too-many-locals, too-many-branches, cell-var-from-loop
+# pylint: disable=too-many-locals, too-many-branches, cell-var-from-loop,
+# pylint: disable=too-many-arguments, too-many-statements,
+# pylint: disable=too-many-positional-arguments
 
 import glob
 import json
@@ -17,6 +19,7 @@ from crop_bodies import crop_person
 from detect_bibs import detect_bib_in_crop
 from detect_runners import detect_persons
 from face_embeddings import extract_face_embeddings
+from visualize_embeddings import plot_embeddings, reduce_embeddings
 
 if os.path.exists("output"):
     shutil.rmtree("output")
@@ -56,7 +59,15 @@ def preprocess_for_ocr(image):
     return binarized
 
 
-def process_images(image_paths, debug=True, progress_callback=None, extract_bib=True):
+def process_images(
+    image_paths,
+    debug: bool = True,
+    progress_callback=None,
+    extract_bib: bool = True,
+    visualize: bool = False,
+    reduce_method: str | None = None,
+    n_components: int | str = 2,
+):
     """Process a list of image paths to detect runners, extract faces, and cluster them.
 
     Parameters
@@ -69,6 +80,14 @@ def process_images(image_paths, debug=True, progress_callback=None, extract_bib=
         Callback to report progress as a float in ``[0, 1]``.
     extract_bib : bool, optional
         If ``True``, attempt OCR to extract bib numbers from detected runners.
+    visualize : bool, optional
+        If ``True``, save a 2D plot of embeddings to ``output/embeddings.png``.
+    reduce_method : str | None, optional
+        Dimensionality reduction method for clustering and visualization.
+        Allowed values are ``"pca"`` and ``"tsne"``.
+    n_components : int | str, optional
+        Number of dimensions for the reducer. If ``"auto"`` with PCA, choose the
+        number of components explaining at least 90% variance. Defaults to ``2``.
     """
     samples = []
     total_images = len(image_paths)
@@ -99,7 +118,19 @@ def process_images(image_paths, debug=True, progress_callback=None, extract_bib=
         if progress_callback:
             progress_callback(idx / max(total_images, 1) * 0.5)
 
-    labels = cluster_face_embeddings([s["embedding"] for s in samples])
+    labels = cluster_face_embeddings(
+        [s["embedding"] for s in samples],
+        reduce_method=reduce_method,
+        n_components=n_components,
+    )
+
+    if visualize:
+        reduced = reduce_embeddings(
+            [s["embedding"] for s in samples],
+            method=reduce_method or "pca",
+            n_components=n_components,
+        )
+        plot_embeddings(reduced, labels=labels, out_path="output/embeddings.png")
 
     summary: dict[int, list[dict]] = {}
 
@@ -177,11 +208,62 @@ def process_images(image_paths, debug=True, progress_callback=None, extract_bib=
     return runner_summary
 
 
-def main(debug=True, extract_bib=True):
-    """Main function to process images."""
+def main(
+    debug: bool = True,
+    extract_bib: bool = True,
+    visualize: bool = False,
+    reduce_method: str | None = None,
+    n_components: int | str = 2,
+):
+    """Main function to process images.
+
+    Parameters correspond to :func:`process_images`.
+    """
     image_paths = glob.glob("images/*.*")
-    process_images(image_paths, debug=debug, extract_bib=extract_bib)
+    process_images(
+        image_paths,
+        debug=debug,
+        extract_bib=extract_bib,
+        visualize=visualize,
+        reduce_method=reduce_method,
+        n_components=n_components,
+    )
 
 
-if __name__ == "__main__":
-    main(DEBUG)
+if __name__ == "__main__":  # pragma: no cover - CLI entry point
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Process runner images")
+    parser.add_argument("--debug", action="store_true", help="Enable debug mode")
+    parser.add_argument(
+        "--no-extract-bib",
+        dest="extract_bib",
+        action="store_false",
+        help="Skip OCR for bib extraction",
+    )
+    parser.add_argument(
+        "--visualize",
+        action="store_true",
+        help="Save a 2D embedding plot to output/embeddings.png",
+    )
+    parser.add_argument(
+        "--reduce-method",
+        choices=["pca", "tsne"],
+        default=None,
+        help="Dimensionality reduction method",
+    )
+    parser.add_argument(
+        "--n-components",
+        default="2",
+        help="Number of dimensions for the reducer or 'auto' for PCA",
+    )
+
+    args = parser.parse_args()
+    n_components_arg: int | str = "auto" if args.n_components == "auto" else int(args.n_components)
+    main(
+        debug=args.debug,
+        extract_bib=args.extract_bib,
+        visualize=args.visualize,
+        reduce_method=args.reduce_method,
+        n_components=n_components_arg,
+    )

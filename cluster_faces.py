@@ -2,24 +2,52 @@
 This module contains the function to cluster face embeddings using HDBSCAN.
 """
 
+from typing import Sequence
+
 import hdbscan
 import numpy as np
+from sklearn.decomposition import PCA
+from sklearn.manifold import TSNE
+
+from visualize_embeddings import _auto_pca_components
 
 
-def cluster_face_embeddings(embeddings):
-    """Cluster face embeddings using HDBSCAN with safety checks."""
+def cluster_face_embeddings(
+    embeddings: Sequence[np.ndarray],
+    reduce_method: str | None = None,
+    n_components: int | str = 2,
+):
+    """Cluster face embeddings using HDBSCAN with optional dimensionality reduction.
+
+    Parameters
+    ----------
+    embeddings : Iterable[np.ndarray]
+        Input embedding vectors.
+    reduce_method : {"pca", "tsne"} | None, optional
+        If provided, reduce the embeddings before clustering using the specified method.
+    n_components : int | str, optional
+        Number of dimensions for the reducer. If ``"auto"`` with PCA, the number
+        of components explaining at least 90% variance is chosen. Defaults to ``2``.
+    """
     stacked_embed = np.vstack(embeddings)
 
     # Remove rows with NaNs
     stacked_embed = stacked_embed[~np.isnan(stacked_embed).any(axis=1)]
 
-    if stacked_embed.shape[0] < 2:
-        return np.array([-1] * len(embeddings))  # Not enough valid points
+    if reduce_method:
+        if reduce_method == "pca":
+            if n_components == "auto":
+                n_components = _auto_pca_components(stacked_embed)
+            reducer = PCA(n_components=int(n_components))
+        elif reduce_method == "tsne":
+            n_components = 2 if n_components == "auto" else n_components
+            reducer = TSNE(n_components=int(n_components), init="random", random_state=42)
+        else:
+            raise ValueError("reduce_method must be 'pca' or 'tsne'")
+        stacked_embed = reducer.fit_transform(stacked_embed)
 
     # Compute covariance safely
     cov = np.cov(stacked_embed, rowvar=False)
-    if np.any(np.isnan(cov)) or np.linalg.matrix_rank(cov) < cov.shape[0]:
-        cov += np.eye(cov.shape[0]) * 1e-6  # Regularize
 
     model = hdbscan.HDBSCAN(
         metric="mahalanobis",
