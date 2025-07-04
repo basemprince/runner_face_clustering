@@ -40,18 +40,14 @@ def cluster_face_embeddings(
                 n_components = _auto_pca_components(stacked_embed)
             reducer = PCA(n_components=int(n_components))
         elif reduce_method == "tsne":
+            n_components = 2 if n_components == "auto" else n_components
             reducer = TSNE(n_components=int(n_components), init="random", random_state=42)
         else:
             raise ValueError("reduce_method must be 'pca' or 'tsne'")
         stacked_embed = reducer.fit_transform(stacked_embed)
 
-    if stacked_embed.shape[0] < 2:
-        return np.array([-1] * len(embeddings))  # Not enough valid points
-
     # Compute covariance safely
     cov = np.cov(stacked_embed, rowvar=False)
-    if np.any(np.isnan(cov)) or np.linalg.matrix_rank(cov) < cov.shape[0]:
-        cov += np.eye(cov.shape[0]) * 1e-6  # Regularize
 
     model = hdbscan.HDBSCAN(
         metric="mahalanobis",

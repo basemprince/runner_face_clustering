@@ -13,7 +13,7 @@ from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 
 
-def _auto_pca_components(data: np.ndarray, threshold: float = 0.9) -> int:
+def _auto_pca_components(data: np.ndarray, threshold: float = 0.7) -> int:
     """Return the smallest number of PCA components to explain ``threshold`` variance."""
     n_components_values = list(range(1, min(data.shape[0], data.shape[1]) + 1))
     explained_variances = []
@@ -23,7 +23,9 @@ def _auto_pca_components(data: np.ndarray, threshold: float = 0.9) -> int:
         explained_variances.append(np.sum(pca.explained_variance_ratio_))
     for n_component, variance in zip(n_components_values, explained_variances):
         if variance >= threshold:
+            print(f"Auto-selected {n_component} PCA components to explain {variance:.2%} variance")
             return n_component
+    print(f"Using all {n_components_values[-1]} components to explain {explained_variances[-1]:.2%} variance")
     return n_components_values[-1]
 
 
