@@ -9,8 +9,6 @@ from pathlib import Path
 import streamlit as st
 
 import main
-
-image_extensions = ["*.jpg", "*.jpeg", "*.png"]
 st.title("Runner Face Clustering UI")
 
 debug_mode = st.checkbox("Debug mode", value=False)
@@ -42,7 +40,7 @@ uploaded_files = st.file_uploader("Upload runner images", type=["jpg", "jpeg", "
 
 if st.button("Process") and uploaded_files:
     images_dir = Path("images")
-    output_dir = Path("output")
+    output_dir = main.output_dir
     # Remove everything in images/ to prevent old data contamination
     if images_dir.exists():
         shutil.rmtree(images_dir)
@@ -75,18 +73,18 @@ if st.button("Process") and uploaded_files:
 
     for cluster_id, info in summary.items():
         TEXT = f"person#{cluster_id}-bib#{info['bib']}" if info["bib"] else f"person#{cluster_id}"
-        folder = output_dir / (TEXT)
+        folder = output_dir / TEXT
         with st.expander(TEXT, expanded=False):
             image_files = [
                 p
                 for p in folder.iterdir()
-                if p.suffix.lower() in {".jpg", ".jpeg", ".png"}
+                if p.is_file() and p.suffix.lower() in {".jpg", ".jpeg", ".png"}
             ]
             for image_file in image_files:
                 st.image(str(image_file))
 
     if output_dir.exists():
-        archive_path = shutil.make_archive("output", "zip", "output")
+        archive_path = shutil.make_archive("output", "zip", str(output_dir))
         archive_file: BufferedReader = open(archive_path, "rb")  # pylint: disable=consider-using-with
         with archive_file:
             st.download_button(
