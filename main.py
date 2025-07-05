@@ -10,9 +10,9 @@ import glob
 import json
 import os
 import shutil
+from pathlib import Path
 
 import cv2
-import numpy as np
 
 from cluster_faces import cluster_face_embeddings
 from crop_bodies import crop_person
@@ -21,34 +21,15 @@ from detect_runners import detect_persons
 from face_embeddings import extract_face_embeddings
 from visualize_embeddings import plot_embeddings, reduce_embeddings
 
-if os.path.exists("output"):
-    shutil.rmtree("output")
-os.makedirs("output")
+output_dir = Path("output")
+output_dir.mkdir(exist_ok=True)
+for item in output_dir.iterdir():
+    if item.is_dir():
+        shutil.rmtree(item)
+    else:
+        item.unlink()
 
 DEBUG = True
-
-
-def apply_clahe(image):
-    """Apply CLAHE to enhance contrast in the image."""
-    lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
-    l, a, b = cv2.split(lab)
-    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-    cl = clahe.apply(l)
-    merged = cv2.merge((cl, a, b))
-    return cv2.cvtColor(merged, cv2.COLOR_LAB2BGR)
-
-
-def sharpen(image):
-    """Apply sharpening filter to the image."""
-    kernel = np.array([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]])
-    return cv2.filter2D(image, -1, kernel)
-
-
-def preprocess_image(image):
-    """Preprocess the image for better OCR and face detection."""
-    image = apply_clahe(image)
-    image = sharpen(image)
-    return image
 
 
 def preprocess_for_ocr(image):
@@ -68,6 +49,7 @@ def process_images(
     reduce_method: str | None = None,
     n_components: int | str = 2,
     min_face_size: int = 5,
+    auto_pca_threshold: float = 0.7,
 ):
     """Process a list of image paths to detect runners, extract faces, and cluster them.
 
@@ -88,9 +70,13 @@ def process_images(
         Allowed values are ``"pca"`` and ``"tsne"``.
     n_components : int | str, optional
         Number of dimensions for the reducer. If ``"auto"`` with PCA, choose the
-        number of components explaining at least 90% variance. Defaults to ``2``.
+        number of components explaining at least ``auto_pca_threshold`` variance.
+        Defaults to ``2``.
     min_face_size : int, optional
         Minimum width/height in pixels for detected faces. Smaller faces are skipped.
+    auto_pca_threshold : float, optional
+        Proportion of variance to explain when automatically selecting PCA components.
+        Defaults to ``0.7`` (70%%).
 
     Returns
     -------
@@ -100,9 +86,14 @@ def process_images(
     samples = []
     total_images = len(image_paths)
 
+    for item_ in output_dir.iterdir():
+        if item_.is_dir():
+            shutil.rmtree(item_)
+        else:
+            item_.unlink()
+
     for idx, img_path in enumerate(image_paths, start=1):
         image = cv2.imread(img_path)
-        # image = preprocess_image(image)
         persons = detect_persons(image)
 
         for box in persons:
@@ -135,6 +126,7 @@ def process_images(
             [s["embedding"] for s in samples],
             reduce_method=reduce_method,
             n_components=n_components,
+            auto_pca_threshold=auto_pca_threshold,
         )
     else:
         labels = []
@@ -144,6 +136,7 @@ def process_images(
             [s["embedding"] for s in samples],
             method=reduce_method or "pca",
             n_components=n_components,
+            auto_pca_threshold=auto_pca_threshold,
         )
         plot_embeddings(reduced, labels=labels, out_path="output/embeddings.png")
 
@@ -229,6 +222,7 @@ def main(
     reduce_method: str | None = None,
     n_components: int | str = 2,
     min_face_size: int = 5,
+    auto_pca_threshold: float = 0.7,
 ):
     """Main function to process images.
 
@@ -243,6 +237,7 @@ def main(
         reduce_method=reduce_method,
         n_components=n_components,
         min_face_size=min_face_size,
+        auto_pca_threshold=auto_pca_threshold,
     )
 
 
@@ -279,6 +274,12 @@ if __name__ == "__main__":  # pragma: no cover - CLI entry point
         default=5,
         help="Minimum width/height in pixels for detected faces",
     )
+    parser.add_argument(
+        "--auto-pca-threshold",
+        type=float,
+        default=0.7,
+        help="Variance proportion for automatic PCA component selection",
+    )
 
     args = parser.parse_args()
     n_components_arg: int | str = "auto" if args.n_components == "auto" else int(args.n_components)
@@ -289,4 +290,5 @@ if __name__ == "__main__":  # pragma: no cover - CLI entry point
         reduce_method=args.reduce_method,
         n_components=n_components_arg,
         min_face_size=args.min_face_size,
+        auto_pca_threshold=args.auto_pca_threshold,
     )

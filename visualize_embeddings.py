@@ -1,6 +1,6 @@
 """Utility functions to visualize face embeddings with dimensionality reduction."""
 
-# pylint: disable=import-outside-toplevel
+# pylint: disable=import-outside-toplevel, duplicate-code
 
 from __future__ import annotations
 
@@ -14,7 +14,15 @@ from sklearn.manifold import TSNE
 
 
 def _auto_pca_components(data: np.ndarray, threshold: float = 0.7) -> int:
-    """Return the smallest number of PCA components to explain ``threshold`` variance."""
+    """Return the smallest number of PCA components explaining ``threshold`` variance.
+
+    Parameters
+    ----------
+    data : np.ndarray
+        Input data matrix of shape (n_samples, n_features).
+    threshold : float, optional
+        Proportion of variance to explain. Defaults to ``0.7`` (70%%).
+    """
     n_components_values = list(range(1, min(data.shape[0], data.shape[1]) + 1))
     explained_variances = []
     for n_component in n_components_values:
@@ -29,17 +37,23 @@ def _auto_pca_components(data: np.ndarray, threshold: float = 0.7) -> int:
     return n_components_values[-1]
 
 
-def reduce_embeddings(embeddings: Iterable[np.ndarray], method: str = "pca", n_components: int | str = 2) -> np.ndarray:
+def reduce_embeddings(
+    embeddings: Iterable[np.ndarray],
+    method: str = "pca",
+    n_components: int | str = 2,
+    auto_pca_threshold: float = 0.7,
+) -> np.ndarray:
     """Reduce embedding dimensions using PCA or t-SNE.
 
     When ``method`` is ``"pca"`` and ``n_components`` is ``"auto```, the number
-    of components is chosen to explain at least 90% of the variance.
+    of components is chosen to explain at least ``auto_pca_threshold`` of the
+    variance.
     """
     data = np.vstack(list(embeddings))
 
     if method == "pca":
         if n_components == "auto":
-            n_components = _auto_pca_components(data)
+            n_components = _auto_pca_components(data, threshold=auto_pca_threshold)
         reducer = PCA(n_components=int(n_components))
     elif method == "tsne":
         reducer = TSNE(n_components=n_components, init="random", random_state=42)
@@ -85,6 +99,12 @@ def main() -> None:  # pragma: no cover - convenience script
         default="2",
         help="Output dimensionality or 'auto' for PCA",
     )
+    parser.add_argument(
+        "--auto-pca-threshold",
+        type=float,
+        default=0.7,
+        help="Variance proportion for automatic PCA component selection",
+    )
     parser.add_argument("--output", help="Path to save the plot")
     args = parser.parse_args()
 
@@ -97,7 +117,12 @@ def main() -> None:  # pragma: no cover - convenience script
             labels = json.load(f)
 
     n_components: int | str = "auto" if args.n_components == "auto" else int(args.n_components)
-    reduced = reduce_embeddings(data, method=args.method, n_components=n_components)
+    reduced = reduce_embeddings(
+        data,
+        method=args.method,
+        n_components=n_components,
+        auto_pca_threshold=args.auto_pca_threshold,
+    )
     plot_embeddings(reduced, labels=labels, out_path=args.output)
 
 

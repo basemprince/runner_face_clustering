@@ -16,6 +16,7 @@ def cluster_face_embeddings(
     embeddings: Sequence[np.ndarray],
     reduce_method: str | None = None,
     n_components: int | str = 2,
+    auto_pca_threshold: float = 0.7,
 ):
     """Cluster face embeddings using HDBSCAN with optional dimensionality reduction.
 
@@ -27,7 +28,11 @@ def cluster_face_embeddings(
         If provided, reduce the embeddings before clustering using the specified method.
     n_components : int | str, optional
         Number of dimensions for the reducer. If ``"auto"`` with PCA, the number
-        of components explaining at least 90% variance is chosen. Defaults to ``2``.
+        of components explaining at least ``auto_pca_threshold`` variance is
+        chosen. Defaults to ``2``.
+    auto_pca_threshold : float, optional
+        Proportion of variance to explain when automatically selecting PCA
+        components. Defaults to ``0.7`` (70%%).
 
     Returns
     -------
@@ -49,7 +54,10 @@ def cluster_face_embeddings(
     if reduce_method:
         if reduce_method == "pca":
             if n_components == "auto":
-                n_components = _auto_pca_components(stacked_embed)
+                n_components = _auto_pca_components(
+                    stacked_embed,
+                    threshold=auto_pca_threshold,
+                )
             reducer = PCA(n_components=int(n_components))
         elif reduce_method == "tsne":
             n_components = 2 if n_components == "auto" else n_components
