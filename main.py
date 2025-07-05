@@ -10,6 +10,7 @@ import glob
 import json
 import os
 import shutil
+from pathlib import Path
 
 import cv2
 import numpy as np
@@ -21,9 +22,13 @@ from detect_runners import detect_persons
 from face_embeddings import extract_face_embeddings
 from visualize_embeddings import plot_embeddings, reduce_embeddings
 
-if os.path.exists("output"):
-    shutil.rmtree("output")
-os.makedirs("output")
+output_dir = Path("output")
+output_dir.mkdir(exist_ok=True)
+for item in output_dir.iterdir():
+    if item.is_dir():
+        shutil.rmtree(item)
+    else:
+        item.unlink()
 
 DEBUG = True
 
@@ -104,6 +109,12 @@ def process_images(
     """
     samples = []
     total_images = len(image_paths)
+
+    for item_ in output_dir.iterdir():
+        if item_.is_dir():
+            shutil.rmtree(item_)
+        else:
+            item_.unlink()
 
     for idx, img_path in enumerate(image_paths, start=1):
         image = cv2.imread(img_path)
