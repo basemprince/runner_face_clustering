@@ -13,7 +13,6 @@ import shutil
 from pathlib import Path
 
 import cv2
-import numpy as np
 
 from cluster_faces import cluster_face_embeddings
 from crop_bodies import crop_person
@@ -31,29 +30,6 @@ for item in output_dir.iterdir():
         item.unlink()
 
 DEBUG = True
-
-
-def apply_clahe(image):
-    """Apply CLAHE to enhance contrast in the image."""
-    lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
-    l, a, b = cv2.split(lab)
-    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-    cl = clahe.apply(l)
-    merged = cv2.merge((cl, a, b))
-    return cv2.cvtColor(merged, cv2.COLOR_LAB2BGR)
-
-
-def sharpen(image):
-    """Apply sharpening filter to the image."""
-    kernel = np.array([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]])
-    return cv2.filter2D(image, -1, kernel)
-
-
-def preprocess_image(image):
-    """Preprocess the image for better OCR and face detection."""
-    image = apply_clahe(image)
-    image = sharpen(image)
-    return image
 
 
 def preprocess_for_ocr(image):
@@ -118,7 +94,6 @@ def process_images(
 
     for idx, img_path in enumerate(image_paths, start=1):
         image = cv2.imread(img_path)
-        # image = preprocess_image(image)
         persons = detect_persons(image)
 
         for box in persons:
