@@ -67,6 +67,7 @@ def process_images(
     visualize: bool = False,
     reduce_method: str | None = None,
     n_components: int | str = 2,
+    min_face_size: int = 5,
 ):
     """Process a list of image paths to detect runners, extract faces, and cluster them.
 
@@ -88,6 +89,13 @@ def process_images(
     n_components : int | str, optional
         Number of dimensions for the reducer. If ``"auto"`` with PCA, choose the
         number of components explaining at least 90% variance. Defaults to ``2``.
+    min_face_size : int, optional
+        Minimum width/height in pixels for detected faces. Smaller faces are skipped.
+
+    Returns
+    -------
+    dict
+        Summary grouped by cluster label. If no faces are detected, the summary is empty.
     """
     samples = []
     total_images = len(image_paths)
@@ -99,7 +107,11 @@ def process_images(
 
         for box in persons:
             body_crop, _ = crop_person(image, box)
-            faces = extract_face_embeddings(body_crop)
+            faces = [
+                f
+                for f in extract_face_embeddings(body_crop)
+                if (f["bbox"][2] - f["bbox"][0] >= min_face_size and f["bbox"][3] - f["bbox"][1] >= min_face_size)
+            ]
 
             if not faces:
                 continue
@@ -118,11 +130,14 @@ def process_images(
         if progress_callback:
             progress_callback(idx / max(total_images, 1) * 0.5)
 
-    labels = cluster_face_embeddings(
-        [s["embedding"] for s in samples],
-        reduce_method=reduce_method,
-        n_components=n_components,
-    )
+    if samples:
+        labels = cluster_face_embeddings(
+            [s["embedding"] for s in samples],
+            reduce_method=reduce_method,
+            n_components=n_components,
+        )
+    else:
+        labels = []
 
     if visualize:
         reduced = reduce_embeddings(
@@ -159,7 +174,6 @@ def process_images(
 
         best_bib = max(bib_votes, key=lambda k: bib_votes[k]) if bib_votes else None
         runner_summary[str(cluster_id)] = {"bib": best_bib, "candidates": bib_votes}
-
         folder_name = f"person#{cluster_id}-bib#{best_bib}" if best_bib else f"person#{cluster_id}"
         out_dir = os.path.join("output", folder_name)
         os.makedirs(out_dir, exist_ok=True)
@@ -214,6 +228,7 @@ def main(
     visualize: bool = False,
     reduce_method: str | None = None,
     n_components: int | str = 2,
+    min_face_size: int = 5,
 ):
     """Main function to process images.
 
@@ -227,6 +242,7 @@ def main(
         visualize=visualize,
         reduce_method=reduce_method,
         n_components=n_components,
+        min_face_size=min_face_size,
     )
 
 
@@ -257,6 +273,12 @@ if __name__ == "__main__":  # pragma: no cover - CLI entry point
         default="2",
         help="Number of dimensions for the reducer or 'auto' for PCA",
     )
+    parser.add_argument(
+        "--min-face-size",
+        type=int,
+        default=5,
+        help="Minimum width/height in pixels for detected faces",
+    )
 
     args = parser.parse_args()
     n_components_arg: int | str = "auto" if args.n_components == "auto" else int(args.n_components)
@@ -266,4 +288,5 @@ if __name__ == "__main__":  # pragma: no cover - CLI entry point
         visualize=args.visualize,
         reduce_method=args.reduce_method,
         n_components=n_components_arg,
+        min_face_size=args.min_face_size,
     )

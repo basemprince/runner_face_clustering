@@ -28,7 +28,19 @@ def cluster_face_embeddings(
     n_components : int | str, optional
         Number of dimensions for the reducer. If ``"auto"`` with PCA, the number
         of components explaining at least 90% variance is chosen. Defaults to ``2``.
+
+    Returns
+    -------
+    np.ndarray
+        Cluster labels for each embedding. If ``embeddings`` is empty, an empty
+        array is returned.
     """
+    if not embeddings:
+        return np.array([], dtype=int)
+
+    if len(embeddings) == 1:
+        return np.array([0], dtype=int)
+
     stacked_embed = np.vstack(embeddings)
 
     # Remove rows with NaNs
