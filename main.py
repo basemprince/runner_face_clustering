@@ -67,8 +67,7 @@ def process_images(
     visualize: bool = False,
     reduce_method: str | None = None,
     n_components: int | str = 2,
-    min_body_size: int = 50,
-    min_face_size: int = 20,
+    min_face_size: int = 5,
 ):
     """Process a list of image paths to detect runners, extract faces, and cluster them.
 
@@ -90,8 +89,6 @@ def process_images(
     n_components : int | str, optional
         Number of dimensions for the reducer. If ``"auto"`` with PCA, choose the
         number of components explaining at least 90% variance. Defaults to ``2``.
-    min_body_size : int, optional
-        Minimum width/height in pixels for detected bodies. Smaller detections are skipped.
     min_face_size : int, optional
         Minimum width/height in pixels for detected faces. Smaller faces are skipped.
 
@@ -106,11 +103,7 @@ def process_images(
     for idx, img_path in enumerate(image_paths, start=1):
         image = cv2.imread(img_path)
         # image = preprocess_image(image)
-        persons = [
-            box
-            for box in detect_persons(image)
-            if (box[2] - box[0] >= min_body_size and box[3] - box[1] >= min_body_size)
-        ]
+        persons = detect_persons(image)
 
         for box in persons:
             body_crop, _ = crop_person(image, box)
@@ -181,7 +174,6 @@ def process_images(
 
         best_bib = max(bib_votes, key=lambda k: bib_votes[k]) if bib_votes else None
         runner_summary[str(cluster_id)] = {"bib": best_bib, "candidates": bib_votes}
-
         folder_name = f"person#{cluster_id}-bib#{best_bib}" if best_bib else f"person#{cluster_id}"
         out_dir = os.path.join("output", folder_name)
         os.makedirs(out_dir, exist_ok=True)
@@ -236,8 +228,7 @@ def main(
     visualize: bool = False,
     reduce_method: str | None = None,
     n_components: int | str = 2,
-    min_body_size: int = 50,
-    min_face_size: int = 20,
+    min_face_size: int = 5,
 ):
     """Main function to process images.
 
@@ -251,7 +242,6 @@ def main(
         visualize=visualize,
         reduce_method=reduce_method,
         n_components=n_components,
-        min_body_size=min_body_size,
         min_face_size=min_face_size,
     )
 
@@ -284,15 +274,9 @@ if __name__ == "__main__":  # pragma: no cover - CLI entry point
         help="Number of dimensions for the reducer or 'auto' for PCA",
     )
     parser.add_argument(
-        "--min-body-size",
-        type=int,
-        default=50,
-        help="Minimum width/height in pixels for detected bodies",
-    )
-    parser.add_argument(
         "--min-face-size",
         type=int,
-        default=20,
+        default=5,
         help="Minimum width/height in pixels for detected faces",
     )
 
@@ -304,6 +288,5 @@ if __name__ == "__main__":  # pragma: no cover - CLI entry point
         visualize=args.visualize,
         reduce_method=args.reduce_method,
         n_components=n_components_arg,
-        min_body_size=args.min_body_size,
         min_face_size=args.min_face_size,
     )
