@@ -9,6 +9,7 @@ from pathlib import Path
 import streamlit as st
 
 import main
+
 st.title("Runner Face Clustering UI")
 
 debug_mode = st.checkbox("Debug mode", value=False)
@@ -36,7 +37,16 @@ elif reducer_choice == "tsne":
         step=1,
     )
 
-uploaded_files = st.file_uploader("Upload runner images", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
+uploaded_files = st.file_uploader(
+    "Upload runner images",
+    type=["jpg", "jpeg", "png"],
+    accept_multiple_files=True,
+    key="uploaded_images",
+)
+
+if st.button("Clear All"):
+    st.session_state["uploaded_images"] = []
+    uploaded_files = []
 
 if st.button("Process") and uploaded_files:
     images_dir = Path("images")
@@ -75,11 +85,7 @@ if st.button("Process") and uploaded_files:
         TEXT = f"person#{cluster_id}-bib#{info['bib']}" if info["bib"] else f"person#{cluster_id}"
         folder = output_dir / TEXT
         with st.expander(TEXT, expanded=False):
-            image_files = [
-                p
-                for p in folder.iterdir()
-                if p.is_file() and p.suffix.lower() in {".jpg", ".jpeg", ".png"}
-            ]
+            image_files = [p for p in folder.iterdir() if p.is_file() and p.suffix.lower() in {".jpg", ".jpeg", ".png"}]
             for image_file in image_files:
                 st.image(str(image_file))
 
