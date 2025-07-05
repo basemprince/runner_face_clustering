@@ -78,7 +78,11 @@ if st.button("Process") and uploaded_files:
         TEXT = f"person#{cluster_id}-bib#{info['bib']}" if info["bib"] else f"person#{cluster_id}"
         folder = output_dir / (TEXT)
         with st.expander(TEXT, expanded=False):
-            image_files = chain.from_iterable(folder.glob(ext) for ext in image_extensions)
+            image_files = [
+                p
+                for p in folder.iterdir()
+                if p.suffix.lower() in {".jpg", ".jpeg", ".png"}
+            ]
             for image_file in image_files:
                 st.image(str(image_file))
 
