@@ -68,6 +68,7 @@ def process_images(
     reduce_method: str | None = None,
     n_components: int | str = 2,
     min_face_size: int = 5,
+    auto_pca_threshold: float = 0.7,
 ):
     """Process a list of image paths to detect runners, extract faces, and cluster them.
 
@@ -88,9 +89,13 @@ def process_images(
         Allowed values are ``"pca"`` and ``"tsne"``.
     n_components : int | str, optional
         Number of dimensions for the reducer. If ``"auto"`` with PCA, choose the
-        number of components explaining at least 90% variance. Defaults to ``2``.
+        number of components explaining at least ``auto_pca_threshold`` variance.
+        Defaults to ``2``.
     min_face_size : int, optional
         Minimum width/height in pixels for detected faces. Smaller faces are skipped.
+    auto_pca_threshold : float, optional
+        Proportion of variance to explain when automatically selecting PCA components.
+        Defaults to ``0.7`` (70%%).
 
     Returns
     -------
@@ -135,6 +140,7 @@ def process_images(
             [s["embedding"] for s in samples],
             reduce_method=reduce_method,
             n_components=n_components,
+            auto_pca_threshold=auto_pca_threshold,
         )
     else:
         labels = []
@@ -144,6 +150,7 @@ def process_images(
             [s["embedding"] for s in samples],
             method=reduce_method or "pca",
             n_components=n_components,
+            auto_pca_threshold=auto_pca_threshold,
         )
         plot_embeddings(reduced, labels=labels, out_path="output/embeddings.png")
 
@@ -229,6 +236,7 @@ def main(
     reduce_method: str | None = None,
     n_components: int | str = 2,
     min_face_size: int = 5,
+    auto_pca_threshold: float = 0.7,
 ):
     """Main function to process images.
 
@@ -243,6 +251,7 @@ def main(
         reduce_method=reduce_method,
         n_components=n_components,
         min_face_size=min_face_size,
+        auto_pca_threshold=auto_pca_threshold,
     )
 
 
@@ -279,6 +288,12 @@ if __name__ == "__main__":  # pragma: no cover - CLI entry point
         default=5,
         help="Minimum width/height in pixels for detected faces",
     )
+    parser.add_argument(
+        "--auto-pca-threshold",
+        type=float,
+        default=0.7,
+        help="Variance proportion for automatic PCA component selection",
+    )
 
     args = parser.parse_args()
     n_components_arg: int | str = "auto" if args.n_components == "auto" else int(args.n_components)
@@ -289,4 +304,5 @@ if __name__ == "__main__":  # pragma: no cover - CLI entry point
         reduce_method=args.reduce_method,
         n_components=n_components_arg,
         min_face_size=args.min_face_size,
+        auto_pca_threshold=args.auto_pca_threshold,
     )
