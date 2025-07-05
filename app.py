@@ -18,13 +18,26 @@ debug_mode = st.checkbox("Debug mode", value=False)
 extract_bib = st.checkbox("Extract bib number (very slow)", value=False)
 visualize_embeddings = st.checkbox("Visualize embeddings", value=False)
 min_face_size = st.number_input("Minimum face pixel height", value=5, min_value=1, max_value=100000)
-auto_pca_threshold_percent = st.slider(
-    "PCA variance threshold (%)",
-    min_value=1,
-    max_value=100,
-    value=70,
-)
+
 reducer_choice = st.selectbox("Dimensionality reduction", ["None", "pca", "tsne"], index=1)
+
+AUTO_PCA_THRESHOLD_PERCENT = 70
+N_COMPONENTS = "auto"
+if reducer_choice == "pca":
+    AUTO_PCA_THRESHOLD_PERCENT = st.slider(
+        "PCA variance threshold (%)",
+        min_value=1,
+        max_value=100,
+        value=70,
+    )
+elif reducer_choice == "tsne":
+    N_COMPONENTS = st.number_input(
+        "t-SNE components",
+        min_value=2,
+        max_value=50,
+        value=2,
+        step=1,
+    )
 
 uploaded_files = st.file_uploader("Upload runner images", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
 
@@ -55,9 +68,9 @@ if st.button("Process") and uploaded_files:
         extract_bib=extract_bib,
         visualize=visualize_embeddings,
         reduce_method=None if reducer_choice == "None" else reducer_choice,
-        n_components="auto",
+        n_components=N_COMPONENTS,
         min_face_size=min_face_size,
-        auto_pca_threshold=auto_pca_threshold_percent / 100,
+        auto_pca_threshold=AUTO_PCA_THRESHOLD_PERCENT / 100,
     )
 
     for cluster_id, info in summary.items():
