@@ -37,16 +37,18 @@ elif reducer_choice == "tsne":
         step=1,
     )
 
+if "upload_key" not in st.session_state:
+    st.session_state["upload_key"] = 0
+
+if st.button("Clear All"):
+    st.session_state["upload_key"] += 1
+
 uploaded_files = st.file_uploader(
     "Upload runner images",
     type=["jpg", "jpeg", "png"],
     accept_multiple_files=True,
-    key="uploaded_images",
+    key=f"uploaded_images_{st.session_state['upload_key']}",
 )
-
-if st.button("Clear All"):
-    st.session_state["uploaded_images"] = []
-    uploaded_files = []
 
 if st.button("Process") and uploaded_files:
     images_dir = Path("images")
