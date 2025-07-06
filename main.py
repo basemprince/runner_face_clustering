@@ -11,22 +11,18 @@ import glob
 import json
 import os
 import shutil
-import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent
-sys.path.insert(0, str(ROOT / "src"))
+import cv2
 
-import cv2  # noqa: E402
-
-from face_clustering.clustering import cluster_face_embeddings  # noqa: E402
-from face_clustering.detection import (  # noqa: E402
+from clustering import cluster_face_embeddings
+from detection import (
     crop_person,
     detect_bib_in_crop,
     detect_persons,
     extract_face_embeddings,
 )
-from face_clustering.visualization import (  # noqa: E402
+from visualization import (
     plot_embeddings,
     reduce_embeddings,
 )

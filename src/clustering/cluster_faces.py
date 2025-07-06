@@ -9,7 +9,7 @@ import numpy as np
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 
-from face_clustering.visualization import _auto_pca_components
+from visualization import _auto_pca_components
 
 
 def cluster_face_embeddings(
