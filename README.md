@@ -2,6 +2,12 @@
 
 takes in pictures of runners, recognizes faces, clusters them, identifies bib numbers and saves them into their respective folders
 
+## Project structure
+
+All Python modules live inside ``src/face_clustering``. The ``main.py`` script
+provides a command line entry point and the Streamlit interface is defined in
+``app.py``.
+
 ## Running the UI
 
 1. Create the conda environment:

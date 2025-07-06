@@ -14,12 +14,12 @@ from pathlib import Path
 
 import cv2
 
-from cluster_faces import cluster_face_embeddings
-from crop_bodies import crop_person
-from detect_bibs import detect_bib_in_crop
-from detect_runners import detect_persons
-from face_embeddings import extract_face_embeddings
-from visualize_embeddings import plot_embeddings, reduce_embeddings
+from face_clustering.cluster_faces import cluster_face_embeddings
+from face_clustering.crop_bodies import crop_person
+from face_clustering.detect_bibs import detect_bib_in_crop
+from face_clustering.detect_runners import detect_persons
+from face_clustering.face_embeddings import extract_face_embeddings
+from face_clustering.visualize_embeddings import plot_embeddings, reduce_embeddings
 
 output_dir = Path("output")
 output_dir.mkdir(exist_ok=True)
