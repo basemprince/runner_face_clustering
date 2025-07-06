@@ -2,24 +2,32 @@
 this script processes images to detect runners, extract their faces, and cluster them based on face embeddings.
 """
 
+# isort: skip_file
 # pylint: disable=too-many-locals, too-many-branches, cell-var-from-loop,
 # pylint: disable=too-many-arguments, too-many-statements,
-# pylint: disable=too-many-positional-arguments
+# pylint: disable=too-many-positional-arguments, wrong-import-position
 
 import glob
 import json
 import os
 import shutil
+import sys
 from pathlib import Path
 
-import cv2
+ROOT = Path(__file__).resolve().parent
+sys.path.insert(0, str(ROOT / "src"))
 
-from face_clustering.cluster_faces import cluster_face_embeddings
-from face_clustering.crop_bodies import crop_person
-from face_clustering.detect_bibs import detect_bib_in_crop
-from face_clustering.detect_runners import detect_persons
-from face_clustering.face_embeddings import extract_face_embeddings
-from face_clustering.visualize_embeddings import plot_embeddings, reduce_embeddings
+import cv2  # noqa: E402
+
+from face_clustering.cluster_faces import cluster_face_embeddings  # noqa: E402
+from face_clustering.crop_bodies import crop_person  # noqa: E402
+from face_clustering.detect_bibs import detect_bib_in_crop  # noqa: E402
+from face_clustering.detect_runners import detect_persons  # noqa: E402
+from face_clustering.face_embeddings import extract_face_embeddings  # noqa: E402
+from face_clustering.visualize_embeddings import (  # noqa: E402
+    plot_embeddings,
+    reduce_embeddings,
+)
 
 output_dir = Path("output")
 output_dir.mkdir(exist_ok=True)
