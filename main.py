@@ -19,12 +19,14 @@ sys.path.insert(0, str(ROOT / "src"))
 
 import cv2  # noqa: E402
 
-from face_clustering.cluster_faces import cluster_face_embeddings  # noqa: E402
-from face_clustering.crop_bodies import crop_person  # noqa: E402
-from face_clustering.detect_bibs import detect_bib_in_crop  # noqa: E402
-from face_clustering.detect_runners import detect_persons  # noqa: E402
-from face_clustering.face_embeddings import extract_face_embeddings  # noqa: E402
-from face_clustering.visualize_embeddings import (  # noqa: E402
+from face_clustering.clustering import cluster_face_embeddings  # noqa: E402
+from face_clustering.detection import (  # noqa: E402
+    crop_person,
+    detect_bib_in_crop,
+    detect_persons,
+    extract_face_embeddings,
+)
+from face_clustering.visualization import (  # noqa: E402
     plot_embeddings,
     reduce_embeddings,
 )
