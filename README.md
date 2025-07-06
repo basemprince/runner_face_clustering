@@ -2,6 +2,22 @@
 
 takes in pictures of runners, recognizes faces, clusters them, identifies bib numbers and saves them into their respective folders
 
+## Project structure
+
+All Python modules live inside ``src/face_clustering`` with three
+subpackages:
+
+``detection`` for runner and face detection utilities,
+``clustering`` for clustering logic, and
+``visualization`` for plotting helpers.
+
+The ``main.py`` script provides a command line entry point and the
+Streamlit interface is defined in ``app.py``.
+
+Both ``main.py`` and ``app.py`` automatically add the ``src`` directory to
+``PYTHONPATH`` so you can run them directly from the repository root without
+additional setup.
+
 ## Running the UI
 
 1. Create the conda environment:

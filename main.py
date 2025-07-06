@@ -2,9 +2,10 @@
 this script processes images to detect runners, extract their faces, and cluster them based on face embeddings.
 """
 
+# isort: skip_file
 # pylint: disable=too-many-locals, too-many-branches, cell-var-from-loop,
 # pylint: disable=too-many-arguments, too-many-statements,
-# pylint: disable=too-many-positional-arguments
+# pylint: disable=too-many-positional-arguments, wrong-import-position
 
 import glob
 import json
@@ -14,12 +15,17 @@ from pathlib import Path
 
 import cv2
 
-from cluster_faces import cluster_face_embeddings
-from crop_bodies import crop_person
-from detect_bibs import detect_bib_in_crop
-from detect_runners import detect_persons
-from face_embeddings import extract_face_embeddings
-from visualize_embeddings import plot_embeddings, reduce_embeddings
+from clustering import cluster_face_embeddings
+from detection import (
+    crop_person,
+    detect_bib_in_crop,
+    detect_persons,
+    extract_face_embeddings,
+)
+from visualization import (
+    plot_embeddings,
+    reduce_embeddings,
+)
 
 output_dir = Path("output")
 output_dir.mkdir(exist_ok=True)
