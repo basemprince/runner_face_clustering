@@ -1,14 +1,18 @@
-"""
-app for runner face clustering using Streamlit.
-"""
+"""app for runner face clustering using Streamlit."""
+
+# pylint: disable=wrong-import-position
 
 import shutil
+import sys
 from io import BufferedReader
 from pathlib import Path
 
 import streamlit as st
 
-import main
+ROOT = Path(__file__).resolve().parent
+sys.path.insert(0, str(ROOT / "src"))  # noqa: E402
+
+import main  # noqa: E402
 
 st.title("Runner Face Clustering UI")
 
